@@ -1,0 +1,738 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>HyperFrames × Modal — intro</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      :root {
+        /* palette (shot-plan palette_roles) */
+        --bg: #141614;
+        --surface: #212525;
+        --surface-alt: #28281f;
+        --ink: #edf2ea;
+        --accent: #80ee64;
+        --accent-soft: #bff9b4;
+        --coral: #ff8e63;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: var(--bg);
+      }
+      body {
+        font-family: "Outfit", sans-serif;
+        color: var(--ink);
+      }
+
+      #stage {
+        position: relative;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: var(--bg);
+      }
+
+      /* ---------- background layer ---------- */
+      #bg-layer {
+        position: absolute;
+        inset: 0;
+      }
+      #bg-grid {
+        position: absolute;
+        inset: 0;
+        background-image:
+          radial-gradient(rgba(237, 242, 234, 0.05) 1.2px, transparent 1.2px),
+          linear-gradient(rgba(237, 242, 234, 0.018) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(237, 242, 234, 0.018) 1px, transparent 1px);
+        background-size:
+          44px 44px,
+          176px 176px,
+          176px 176px;
+      }
+      /* vignette block (registry: vignette) — warm black, very low */
+      #hf-vignette {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 90;
+        background: radial-gradient(
+          ellipse at center,
+          transparent 48%,
+          rgba(9, 11, 8, 0.55) 100%
+        );
+      }
+
+      /* ---------- shared scene shell ---------- */
+      .scene {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 80px;
+      }
+
+      /* ---------- shimmer sweep (registry: shimmer-sweep, lime-tinted, low) ---------- */
+      .shimmer-sweep-target {
+        position: relative;
+        --shimmer-pos: -25%;
+      }
+      .shimmer-sweep-target .shimmer-mask {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        background: linear-gradient(
+          115deg,
+          transparent 0%,
+          transparent calc(var(--shimmer-pos, -25%) - 9%),
+          rgba(191, 249, 180, 0.32) var(--shimmer-pos, -25%),
+          transparent calc(var(--shimmer-pos, -25%) + 9%),
+          transparent 100%
+        );
+        mix-blend-mode: overlay;
+      }
+
+      /* ---------- s1 hook (type system borrowed from caption-editorial-emphasis) ---------- */
+      #s1-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 18px;
+        filter: blur(0px);
+      }
+      .s1-line {
+        display: flex;
+        align-items: baseline;
+        gap: 30px;
+        line-height: 1.05;
+        white-space: nowrap;
+      }
+      .word {
+        display: inline-block;
+        will-change: transform, opacity;
+        text-shadow: 0 0 0px rgba(128, 238, 100, 0);
+      }
+      .s1-line .word {
+        font-size: 120px;
+        font-weight: 600;
+        color: var(--ink);
+        letter-spacing: -0.01em;
+      }
+      .s1-line .word--emphasis {
+        font-weight: 700;
+      }
+
+      /* ---------- s2 fan-out (hand-authored money visual) ---------- */
+      #s2-overline {
+        position: absolute;
+        top: 120px;
+        left: 0;
+        width: 100%;
+        text-align: center;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 26px;
+        letter-spacing: 0.14em;
+        color: var(--accent-soft);
+      }
+      #s2-overline .ovl-em {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      #job-chip {
+        position: absolute;
+        left: 730px;
+        top: 492px;
+        width: 460px;
+        height: 96px;
+        display: flex;
+        align-items: center;
+        gap: 22px;
+        padding: 0 34px;
+        background: var(--surface);
+        border: 1px solid rgba(128, 238, 100, 0.35);
+        border-radius: 48px;
+        box-shadow: 0 18px 60px rgba(0, 0, 0, 0.45);
+      }
+      #job-chip-dot {
+        width: 30px;
+        height: 17px;
+        flex: 0 0 30px;
+        filter: drop-shadow(0 0 10px rgba(128, 238, 100, 0.55));
+      }
+      #job-chip-dot svg {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+      .job-chip-text {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+      .job-chip-label {
+        font-size: 30px;
+        font-weight: 500;
+        color: var(--ink);
+        line-height: 1.1;
+      }
+      .job-chip-sub {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 19px;
+        color: var(--accent-soft);
+        line-height: 1.1;
+      }
+      #fan-grid {
+        position: absolute;
+        left: 318px;
+        top: 307px;
+        width: 1284px;
+        height: 506px;
+      }
+      .fan-tile {
+        position: absolute;
+        width: 300px;
+        height: 150px;
+        background: var(--surface);
+        border: 1px solid rgba(128, 238, 100, 0.18);
+        border-radius: 12px;
+        padding: 18px 20px 0;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        overflow: hidden;
+        will-change: transform, opacity;
+        box-shadow: 0 0 0px rgba(128, 238, 100, 0);
+      }
+      .fan-tile.tile-alt {
+        background: var(--surface-alt);
+      }
+      .tile-head {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .tile-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: rgba(128, 238, 100, 0.3);
+        box-shadow: 0 0 0px rgba(128, 238, 100, 0);
+        flex: 0 0 10px;
+      }
+      .tile-label {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 21px;
+        color: var(--accent-soft);
+        opacity: 0.9;
+        white-space: nowrap;
+      }
+      .tile-sub {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 15px;
+        color: rgba(237, 242, 234, 0.62);
+        letter-spacing: 0.08em;
+      }
+      .tile-bar-track {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 4px;
+        background: rgba(237, 242, 234, 0.08);
+      }
+      .tile-bar {
+        display: block;
+        width: 100%;
+        height: 100%;
+        transform-origin: left center;
+        will-change: transform;
+      }
+
+      #frame-assembled {
+        position: absolute;
+        left: 520px;
+        top: 292px;
+        width: 880px;
+        height: 495px;
+        background: var(--surface-alt);
+        border: 1px solid rgba(128, 238, 100, 0.55);
+        border-radius: 14px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 26px;
+        overflow: hidden;
+        box-shadow: 0 0 0px rgba(128, 238, 100, 0);
+        filter: blur(0px);
+        will-change: transform, opacity;
+      }
+      #frame-scanlines {
+        position: absolute;
+        inset: 0;
+        background: repeating-linear-gradient(
+          to bottom,
+          rgba(237, 242, 234, 0.05) 0px,
+          rgba(237, 242, 234, 0.05) 1px,
+          transparent 1px,
+          transparent 5px
+        );
+        opacity: 0.5;
+        pointer-events: none;
+      }
+      #frame-play {
+        width: 108px;
+        height: 108px;
+        display: block;
+        will-change: transform, opacity;
+      }
+      #frame-status {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 24px;
+        color: var(--accent-soft);
+        will-change: transform, opacity;
+      }
+      #frame-status .tick {
+        color: var(--accent);
+        font-weight: 700;
+      }
+
+      /* ---------- s3 lockup ---------- */
+      #s3-group {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 70px;
+        will-change: transform;
+      }
+      #s3-lockup {
+        display: flex;
+        align-items: baseline;
+        white-space: nowrap;
+        line-height: 1.1;
+        padding: 0 20px 10px;
+      }
+      .lk {
+        font-size: 112px;
+        font-weight: 700;
+        color: var(--ink);
+        letter-spacing: -0.015em;
+      }
+      #lk-x {
+        color: var(--accent);
+        margin: 0 34px;
+        font-weight: 600;
+      }
+      #lk-mark {
+        display: block;
+        align-self: center;
+        margin-right: 26px;
+        will-change: transform, opacity;
+      }
+      #lk-mark svg {
+        display: block;
+        height: 84px;
+        width: auto;
+      }
+      #s3-underline {
+        width: 720px;
+        height: 2px;
+        margin-top: 26px;
+        background: var(--accent);
+        border-radius: 1px;
+        will-change: transform;
+      }
+      /* terminal chip — typing mechanic borrowed from code-typing, rebuilt seek-safe */
+      #s3-chip {
+        margin-top: 62px;
+        width: 420px;
+        height: 72px;
+        display: flex;
+        align-items: center;
+        padding: 0 30px;
+        background: var(--surface);
+        border: 1px solid rgba(128, 238, 100, 0.25);
+        border-radius: 36px;
+        box-shadow: 0 14px 44px rgba(0, 0, 0, 0.4);
+        will-change: transform, opacity;
+      }
+      #chip-cmd {
+        position: relative;
+        display: inline-block;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 30px;
+        line-height: 40px;
+        white-space: pre;
+        color: var(--ink);
+      }
+      .chip-char {
+        display: inline-block;
+        white-space: pre;
+      }
+      .chip-char.chip-prompt {
+        color: var(--accent);
+      }
+      #chip-caret {
+        position: absolute;
+        left: 0ch;
+        top: 3px;
+        width: 15px;
+        height: 34px;
+        background: var(--coral);
+        border-radius: 2px;
+        z-index: 2;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="stage"
+      data-root="true"
+      data-composition-id="modal-intro"
+      data-start="0"
+      data-duration="12"
+      data-fps="30"
+      data-width="1920"
+      data-height="1080"
+    >
+      <!-- track 0 — background field, full duration -->
+      <div id="bg-layer" class="clip" data-start="0" data-duration="12" data-track-index="0">
+        <div id="bg-grid"></div>
+        <div id="hf-vignette"></div>
+      </div>
+
+      <!-- track 1 — s1 hook -->
+      <div id="s1-hook" class="clip scene" data-start="0" data-duration="3.3" data-track-index="1" data-layout-allow-overlap="true">
+        <div id="s1-content">
+          <div class="s1-line" id="s1-line1">
+            <span class="word" id="s1-w-write">Write</span>
+            <span class="word word--emphasis" id="s1-w-html">HTML.</span>
+          </div>
+          <div class="s1-line" id="s1-line2">
+            <span class="word" id="s1-w-render">Render</span>
+            <span class="word word--emphasis" id="s1-w-video">video.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- track 2 — s2 fan-out (hand-authored money visual) -->
+      <div id="s2-fanout" class="clip" data-start="3.3" data-duration="5.5" data-track-index="2" style="position: absolute; inset: 0">
+        <div id="s2-overline">1 job &rarr; <span class="ovl-em">12</span> containers</div>
+        <div id="job-chip">
+          <span id="job-chip-dot"><svg viewBox="0 66 300 168" xmlns="http://www.w3.org/2000/svg"><path d="M121.683 75.25L149.997 124L91.4816 224.75C90.3128 226.757 88.155 228 85.8174 228H32.9664C31.7976 228 30.6778 227.691 29.697 227.131C28.7161 226.57 27.8906 225.758 27.3021 224.75L0.876625 179.25C-0.292208 177.243 -0.292208 174.765 0.876625 172.75L57.512 75.25C58.0923 74.2425 58.9259 73.43 59.9068 72.8694C60.8876 72.3088 62.0074 72 63.1762 72H116.027C118.365 72 120.523 73.2431 121.692 75.25H121.683ZM299.125 172.75L242.49 75.25C241.91 74.2425 241.076 73.43 240.095 72.8694C239.114 72.3088 237.995 72 236.826 72H183.975C181.637 72 179.479 73.2431 178.311 75.25L149.997 124L208.512 224.75C209.681 226.757 211.839 228 214.177 228H267.027C268.196 228 269.316 227.691 270.297 227.131C271.278 226.57 272.103 225.758 272.692 224.75L299.117 179.25C300.286 177.243 300.286 174.765 299.117 172.75H299.125Z" fill="#80EE64"/><path d="M149.997 124H89.5936L29.697 227.131C30.6778 227.691 31.7976 228 32.9664 228H85.8174C88.155 228 90.3128 226.757 91.4816 224.75L149.997 124Z" fill="#09AF58"/><path d="M299.125 179.25C299.706 178.243 300 177.121 300 176H240.61L210.915 227.131C211.896 227.691 213.016 228 214.185 228H267.036C269.373 228 271.531 226.757 272.7 224.75L299.125 179.25Z" fill="#09AF58"/></svg></span>
+          <span class="job-chip-text">
+            <span class="job-chip-label">render job</span>
+            <span class="job-chip-sub">360 frames</span>
+          </span>
+        </div>
+        <div id="fan-grid" data-layout-allow-overlap="true" data-layout-allow-occlusion="true"><!-- tiles are alpha-0 when the assembled frame overlays them; 12 tiles built deterministically in script --></div>
+        <div id="frame-assembled" class="shimmer-sweep-target">
+          <div id="frame-scanlines"></div>
+          <svg id="frame-play" viewBox="0 0 108 108" fill="none">
+            <path
+              d="M38 26 L84 54 L38 82 Z"
+              stroke="#80EE64"
+              stroke-width="5"
+              stroke-linejoin="round"
+              fill="none"
+            />
+          </svg>
+          <div id="frame-status">
+            <span class="tick">&#10003;</span>
+            <span>360/360 frames &middot; rendered in parallel</span>
+          </div>
+          <div class="shimmer-mask"></div>
+        </div>
+      </div>
+
+      <!-- track 3 — s3 lockup -->
+      <div id="s3-lockup-scene" class="clip scene" data-start="8.8" data-duration="3.2" data-track-index="3">
+        <div id="s3-group">
+          <div id="s3-lockup" class="shimmer-sweep-target">
+            <span class="word lk" id="lk-hyperframes">HyperFrames</span>
+            <span class="word lk" id="lk-x">&times;</span>
+            <span class="word" id="lk-mark" aria-hidden="true"><svg viewBox="0 66 300 168" xmlns="http://www.w3.org/2000/svg"><path d="M121.683 75.25L149.997 124L91.4816 224.75C90.3128 226.757 88.155 228 85.8174 228H32.9664C31.7976 228 30.6778 227.691 29.697 227.131C28.7161 226.57 27.8906 225.758 27.3021 224.75L0.876625 179.25C-0.292208 177.243 -0.292208 174.765 0.876625 172.75L57.512 75.25C58.0923 74.2425 58.9259 73.43 59.9068 72.8694C60.8876 72.3088 62.0074 72 63.1762 72H116.027C118.365 72 120.523 73.2431 121.692 75.25H121.683ZM299.125 172.75L242.49 75.25C241.91 74.2425 241.076 73.43 240.095 72.8694C239.114 72.3088 237.995 72 236.826 72H183.975C181.637 72 179.479 73.2431 178.311 75.25L149.997 124L208.512 224.75C209.681 226.757 211.839 228 214.177 228H267.027C268.196 228 269.316 227.691 270.297 227.131C271.278 226.57 272.103 225.758 272.692 224.75L299.117 179.25C300.286 177.243 300.286 174.765 299.117 172.75H299.125Z" fill="#62DE61"/><path d="M89.6018 124H150.005L121.692 75.25C120.523 73.2431 118.365 72 116.027 72H63.1763C62.0074 72 60.8876 72.3088 59.9068 72.8694L89.6018 124Z" fill="url(#hf-mark-g0)"/><path d="M89.6018 124L59.9068 72.8694C58.9259 73.43 58.1005 74.2425 57.512 75.25L0.876625 172.75C-0.292208 174.765 -0.292208 177.235 0.876625 179.25L27.3021 224.75C27.8825 225.758 28.7161 226.57 29.697 227.131L89.5936 124H89.6018Z" fill="url(#hf-mark-g1)"/><path d="M149.997 124H89.5936L29.697 227.131C30.6778 227.691 31.7976 228 32.9664 228H85.8174C88.155 228 90.3128 226.757 91.4816 224.75L149.997 124Z" fill="#09AF58"/><path d="M299.125 179.25C299.706 178.243 300 177.121 300 176H240.61L210.915 227.131C211.896 227.691 213.016 228 214.185 228H267.036C269.373 228 271.531 226.757 272.7 224.75L299.125 179.25Z" fill="#09AF58"/><path d="M183.975 72C182.806 72 181.686 72.3088 180.705 72.8694L240.602 176H299.992C299.992 174.879 299.698 173.758 299.117 172.75L242.49 75.25C241.321 73.2431 239.163 72 236.826 72H183.967H183.975Z" fill="url(#hf-mark-g2)"/><path d="M210.907 227.131L240.602 176L180.705 72.8694C179.725 73.43 178.899 74.2425 178.311 75.25L149.997 124L208.512 224.75C209.093 225.758 209.926 226.57 210.907 227.131Z" fill="url(#hf-mark-g3)"/><defs><linearGradient id="hf-mark-g0" x1="127.348" y1="137" x2="82.9561" y2="59.6398" gradientUnits="userSpaceOnUse"><stop stop-color="#BFF9B4"/><stop offset="1" stop-color="#80EE64"/></linearGradient><linearGradient id="hf-mark-g1" x1="7.04774" y1="214.131" x2="81.1284" y2="85.0556" gradientUnits="userSpaceOnUse"><stop stop-color="#80EE64"/><stop offset="0.18" stop-color="#7BEB63"/><stop offset="0.36" stop-color="#6FE562"/><stop offset="0.55" stop-color="#5ADA60"/><stop offset="0.74" stop-color="#3DCA5D"/><stop offset="0.93" stop-color="#18B759"/><stop offset="1" stop-color="#09AF58"/></linearGradient><linearGradient id="hf-mark-g2" x1="278.103" y1="188.561" x2="204.022" y2="59.4863" gradientUnits="userSpaceOnUse"><stop stop-color="#BFF9B4"/><stop offset="1" stop-color="#80EE64"/></linearGradient><linearGradient id="hf-mark-g3" x1="232.804" y1="214.569" x2="158.724" y2="85.4864" gradientUnits="userSpaceOnUse"><stop stop-color="#80EE64"/><stop offset="0.18" stop-color="#7BEB63"/><stop offset="0.36" stop-color="#6FE562"/><stop offset="0.55" stop-color="#5ADA60"/><stop offset="0.74" stop-color="#3DCA5D"/><stop offset="0.93" stop-color="#18B759"/><stop offset="1" stop-color="#09AF58"/></linearGradient></defs></svg></span>
+            <span class="word lk" id="lk-modal">Modal</span>
+            <div class="shimmer-mask"></div>
+          </div>
+          <div id="s3-underline"></div>
+          <div id="s3-chip">
+            <span id="chip-cmd" data-layout-allow-occlusion="true"><span id="chip-caret"></span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        "use strict";
+
+        /* ============ deterministic DOM build (no measurement, no async) ============ */
+
+        // 12 container tiles, 3 rows x 4 cols, tile 300x150, gap 28 -> zone 1284x506
+        var COLS = 4;
+        var ROWS = 3;
+        var TILE_W = 300;
+        var TILE_H = 150;
+        var GAP = 28;
+        var RAMP = ["#7BEB63", "#6FE562", "#5ADA60", "#3DCA5D", "#18B759", "#10A550", "#059345"];
+        var ALT_TILES = { 0: 1, 3: 1, 5: 1, 10: 1 }; // index-hashed: (i*5)%12 < 4
+
+        // offsets from each tile's grid slot back to the job chip at canvas center (960,540)
+        var DX = [];
+        var DY = [];
+
+        var grid = document.getElementById("fan-grid");
+        for (var i = 0; i < 12; i++) {
+          var c = i % COLS;
+          var r = Math.floor(i / COLS);
+          var left = c * (TILE_W + GAP);
+          var top = r * (TILE_H + GAP);
+          DX.push(492 - c * (TILE_W + GAP)); // 960 - (318 + left + 150)
+          DY.push(158 - r * (TILE_H + GAP)); // 540 - (307 + top + 75)
+
+          var tile = document.createElement("div");
+          tile.className = "fan-tile" + (ALT_TILES[i] ? " tile-alt" : "");
+          tile.id = "tile-" + i;
+          tile.style.left = left + "px";
+          tile.style.top = top + "px";
+
+          var head = document.createElement("div");
+          head.className = "tile-head";
+          var dot = document.createElement("span");
+          dot.className = "tile-dot";
+          dot.id = "tile-dot-" + i;
+          var label = document.createElement("span");
+          label.className = "tile-label";
+          label.textContent = "frames " + i * 30 + "–" + (i * 30 + 29);
+          head.appendChild(dot);
+          head.appendChild(label);
+
+          var sub = document.createElement("div");
+          sub.className = "tile-sub";
+          sub.textContent = "container " + String(i + 1).padStart(2, "0");
+
+          var track = document.createElement("div");
+          track.className = "tile-bar-track";
+          var bar = document.createElement("span");
+          bar.className = "tile-bar";
+          bar.id = "tile-bar-" + i;
+          bar.style.background = RAMP[Math.floor((i * 7) / 12)];
+          track.appendChild(bar);
+
+          tile.appendChild(head);
+          tile.appendChild(sub);
+          tile.appendChild(track);
+          grid.appendChild(tile);
+        }
+
+        // terminal chip chars — "$ modal deploy", per-char spans, caret already in DOM
+        var CMD = "$ modal deploy";
+        var cmdEl = document.getElementById("chip-cmd");
+        var caret = document.getElementById("chip-caret");
+        for (var k = 0; k < CMD.length; k++) {
+          var ch = document.createElement("span");
+          ch.className = "chip-char" + (k === 0 ? " chip-prompt" : "");
+          ch.id = "chip-ch-" + k;
+          ch.textContent = CMD[k];
+          cmdEl.insertBefore(ch, caret);
+        }
+
+        /* ============ ONE paused timeline (absolute times, 12s) ============ */
+
+        window.__timelines = window.__timelines || {};
+        var tl = gsap.timeline({ paused: true });
+
+        /* ---- bg: grid + vignette fade in 0-0.3 ---- */
+        tl.fromTo("#bg-grid", { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.3, ease: "power1.out" }, 0);
+        tl.fromTo("#hf-vignette", { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.3, ease: "power1.out" }, 0);
+
+        /* ---- s1 hook: word_reveal, lime ignite on beat 1.5, condense exit 2.9-3.3 ---- */
+        tl.set(["#s1-w-write", "#s1-w-html", "#s1-w-render", "#s1-w-video"], { autoAlpha: 0, y: 44 }, 0);
+        tl.to("#s1-w-write", { autoAlpha: 1, y: 0, duration: 0.55, ease: "power3.out" }, 0.25);
+        tl.to("#s1-w-html", { autoAlpha: 1, y: 0, duration: 0.55, ease: "power3.out" }, 0.34);
+        tl.to("#s1-w-render", { autoAlpha: 1, y: 0, duration: 0.55, ease: "power3.out" }, 1.5);
+        tl.to("#s1-w-video", { autoAlpha: 1, y: 0, duration: 0.55, ease: "power3.out" }, 1.59);
+        tl.to("#s1-w-video", { color: "#80EE64", duration: 0.3, ease: "power2.out" }, 1.8);
+        tl.to(
+          "#s1-w-video",
+          { textShadow: "0 0 42px rgba(128,238,100,0.55)", duration: 0.28, yoyo: true, repeat: 1, ease: "sine.inOut" },
+          1.8,
+        );
+        tl.to(
+          "#s1-content",
+          { autoAlpha: 0, scale: 0.96, filter: "blur(14px)", duration: 0.4, ease: "power2.in" },
+          2.9,
+        );
+        tl.set("#s1-content", { autoAlpha: 0 }, 3.3); // hard kill at clip boundary (seek-safe)
+
+        /* ---- s2: job chip scale_punch (born from collapsing copy) ---- */
+        tl.set("#job-chip", { autoAlpha: 0, scale: 0.6 }, 0);
+        tl.to("#job-chip", { autoAlpha: 1, scale: 1, duration: 0.32, ease: "back.out(2.2)" }, 3.3);
+        tl.to("#job-chip-dot", { scale: 1.5, duration: 0.14, yoyo: true, repeat: 1, ease: "sine.inOut" }, 3.55);
+        tl.to("#job-chip", { autoAlpha: 0, scale: 0.45, duration: 0.35, ease: "power2.in" }, 3.8);
+
+        /* ---- s2: FAN-OUT on beat 3.8 — tiles fly from chip center to grid slots ---- */
+        for (var t = 0; t < 12; t++) {
+          tl.set("#tile-" + t, { autoAlpha: 0, x: DX[t], y: DY[t], scale: 0.25 }, 0);
+        }
+        tl.to(
+          ".fan-tile",
+          {
+            autoAlpha: 1,
+            x: 0,
+            y: 0,
+            scale: 1,
+            duration: 0.55,
+            ease: "back.out(1.4)",
+            stagger: { grid: [ROWS, COLS], from: "center", each: 0.05 },
+          },
+          3.8,
+        );
+        // spin-up: brief lime border-glow flash as each tile lands (same stagger pattern)
+        tl.to(
+          ".fan-tile",
+          {
+            boxShadow: "0 0 26px rgba(128,238,100,0.45)",
+            duration: 0.12,
+            yoyo: true,
+            repeat: 1,
+            ease: "sine.inOut",
+            stagger: { grid: [ROWS, COLS], from: "center", each: 0.05 },
+          },
+          4.25,
+        );
+
+        /* ---- s2: PARALLEL WORK — bars fill out of order (index-hashed, deterministic) ---- */
+        for (var b = 0; b < 12; b++) {
+          var fillStart = 4.2 + (((b * 5) % 12) / 11) * 0.4; // 4.2 - 4.6
+          var fillEnd = 5.1 + (((b * 7) % 12) / 11) * 1.25; // 5.1 - 6.35, scrambled order
+          tl.set("#tile-bar-" + b, { scaleX: 0 }, 0);
+          tl.to("#tile-bar-" + b, { scaleX: 1, duration: fillEnd - fillStart, ease: "power1.inOut" }, fillStart);
+          tl.to(
+            "#tile-dot-" + b,
+            { backgroundColor: "#80EE64", boxShadow: "0 0 12px rgba(128,238,100,0.8)", duration: 0.15, ease: "power2.out" },
+            fillEnd,
+          );
+          tl.to("#tile-" + b, { scale: 1.03, duration: 0.1, yoyo: true, repeat: 1, ease: "sine.inOut" }, fillEnd);
+        }
+
+        /* ---- s2: mono overline caption 4.0 - 6.4 ---- */
+        tl.set("#s2-overline", { autoAlpha: 0, y: -14 }, 0);
+        tl.to("#s2-overline", { autoAlpha: 1, y: 0, duration: 0.35, ease: "power2.out" }, 4.0);
+        tl.to("#s2-overline", { autoAlpha: 0, duration: 0.3, ease: "power2.in" }, 6.4);
+
+        /* ---- s2: CONVERGE on beat 6.6 — reverse stagger from edges ---- */
+        tl.to(
+          ".fan-tile",
+          {
+            x: function (idx) {
+              return DX[idx];
+            },
+            y: function (idx) {
+              return DY[idx];
+            },
+            scale: 0.25,
+            autoAlpha: 0,
+            duration: 0.5,
+            ease: "power2.in",
+            stagger: { grid: [ROWS, COLS], from: "edges", each: 0.05 },
+          },
+          6.6,
+        );
+
+        /* ---- s2: assembled frame + COMPLETE on beat 7.4 ---- */
+        tl.set("#frame-assembled", { autoAlpha: 0, scale: 0.9 }, 0);
+        tl.to("#frame-assembled", { autoAlpha: 1, scale: 1, duration: 0.45, ease: "power2.out" }, 6.9);
+        tl.to(
+          "#frame-assembled",
+          { boxShadow: "0 0 60px rgba(128,238,100,0.35)", duration: 0.2, yoyo: true, repeat: 1, ease: "sine.inOut" },
+          7.4,
+        );
+        tl.set("#frame-play", { autoAlpha: 0, scale: 0.6 }, 0);
+        tl.to("#frame-play", { autoAlpha: 1, scale: 1, duration: 0.35, ease: "back.out(2.2)" }, 7.4);
+        tl.set("#frame-status", { autoAlpha: 0, y: 12 }, 0);
+        tl.to("#frame-status", { autoAlpha: 1, y: 0, duration: 0.3, ease: "power2.out" }, 7.55);
+        // shimmer pass across the assembled frame (registry: shimmer-sweep)
+        tl.fromTo(
+          "#frame-assembled",
+          { "--shimmer-pos": "-25%" },
+          { "--shimmer-pos": "125%", duration: 0.8, ease: "power2.inOut" },
+          7.6,
+        );
+        // exit: hand off to s3
+        tl.to(
+          "#frame-assembled",
+          { autoAlpha: 0, scale: 0.98, filter: "blur(10px)", duration: 0.3, ease: "power2.in" },
+          8.5,
+        );
+        tl.set("#frame-assembled", { autoAlpha: 0 }, 8.8); // hard kill at clip boundary (seek-safe)
+
+        /* ---- s3: lockup word_reveal 8.9-9.4, x punch on beat 9.2 ---- */
+        tl.set(["#lk-hyperframes", "#lk-mark", "#lk-modal"], { autoAlpha: 0, y: 44 }, 0);
+        tl.set("#lk-x", { autoAlpha: 0, scale: 0.55 }, 0);
+        tl.to("#lk-hyperframes", { autoAlpha: 1, y: 0, duration: 0.5, ease: "power3.out" }, 8.9);
+        tl.to(["#lk-mark", "#lk-modal"], { autoAlpha: 1, y: 0, duration: 0.5, ease: "power3.out", stagger: 0.06 }, 9.02);
+        tl.to("#lk-x", { autoAlpha: 1, scale: 1, duration: 0.4, ease: "back.out(2.2)" }, 9.2);
+        tl.to(
+          "#lk-x",
+          { textShadow: "0 0 46px rgba(128,238,100,0.8)", duration: 0.3, yoyo: true, repeat: 1, ease: "sine.inOut" },
+          9.25,
+        );
+        // shimmer pass across the lockup
+        tl.fromTo(
+          "#s3-lockup",
+          { "--shimmer-pos": "-25%" },
+          { "--shimmer-pos": "125%", duration: 0.9, ease: "power2.inOut" },
+          9.6,
+        );
+
+        /* ---- s3: underline_sweep 9.8-10.1 ---- */
+        tl.set("#s3-underline", { scaleX: 0, transformOrigin: "left center" }, 0);
+        tl.to("#s3-underline", { scaleX: 1, duration: 0.3, ease: "power3.out" }, 9.8);
+
+        /* ---- s3: terminal chip rises 10.0, types '$ modal deploy' 10.0-10.8 ---- */
+        tl.set("#s3-chip", { autoAlpha: 0, y: 40 }, 0);
+        tl.to("#s3-chip", { autoAlpha: 1, y: 0, duration: 0.35, ease: "power3.out" }, 10.0);
+        // seek-safe typewriter: stepped per-char reveals + caret position in ch units
+        for (var q = 0; q < CMD.length; q++) {
+          tl.set("#chip-ch-" + q, { autoAlpha: 0 }, 0);
+        }
+        for (var p = 0; p < CMD.length; p++) {
+          var at = 10.02 + p * 0.056;
+          tl.set("#chip-ch-" + p, { autoAlpha: 1 }, at);
+          tl.set("#chip-caret", { left: p + 1 + "ch" }, at);
+        }
+        // one stepped blink, then the caret holds solid after 11.0 (the shot's single coral pop)
+        tl.set("#chip-caret", { autoAlpha: 0 }, 10.85);
+        tl.set("#chip-caret", { autoAlpha: 1 }, 11.0);
+
+        /* ---- s3: hold_breath on the whole lockup group to the final frame ---- */
+        tl.to("#s3-group", { scale: 1.015, duration: 1.2, ease: "sine.inOut" }, 10.8);
+
+        /* ---- pad to full duration, register, park at 0 ---- */
+        tl.to({}, { duration: 12 }, 0);
+        window.__timelines["modal-intro"] = tl;
+        tl.seek(0);
+      })();
+    </script>
+  </body>
+</html>

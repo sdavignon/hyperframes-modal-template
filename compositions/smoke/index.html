@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=1280, height=720">
+  <title>Modal Smoke Test</title>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; width: 1280px; height: 720px; overflow: hidden; background: #0e1016; }
+    #smoke h1 {
+      margin: 0;
+      color: #9ee937;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      font-size: 88px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      opacity: 0;
+    }
+  </style>
+</head>
+<body style="margin: 0">
+  <div
+    id="smoke"
+    data-composition-id="modal-smoke"
+    data-width="1280"
+    data-height="720"
+    data-start="0"
+    data-duration="3"
+    style="position: relative; width: 1280px; height: 720px; overflow: hidden; background: #0e1016"
+  >
+    <section
+      class="clip"
+      data-start="0"
+      data-duration="3"
+      data-track-index="1"
+      style="position: absolute; inset: 0; display: grid; place-items: center; padding: 80px 120px"
+    >
+      <h1>HyperFrames &times; Modal</h1>
+    </section>
+  </div>
+
+  <script>
+    window.__timelines = window.__timelines || {};
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo("#smoke h1", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.8, ease: "power2.out" }, 0.2)
+        .to("#smoke h1", { scale: 1.05, duration: 1.6, ease: "none" }, 1.0)
+        .to("#smoke h1", { opacity: 0, duration: 0.5, ease: "power2.in" }, 2.5);
+      window.__timelines["modal-smoke"] = tl;
+    })();
+  </script>
+</body>
+</html>
