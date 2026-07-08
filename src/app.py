@@ -6,19 +6,26 @@ Smoke:   modal run src/app.py            (renders compositions/smoke end-to-end)
 
 Architecture (mirrors hyperframes-vercel-template / hyperframes-cloudflare-template):
 - A web endpoint serves a preview page (<hyperframes-player>) for the bundled composition.
-- POST /api/render spawns a render Function (4 vCPU, headless Chromium + FFmpeg via the
+- POST /api/render spawns a render Function (headless Chromium + FFmpeg via the
   hyperframes CLI) and returns a call_id; the client polls GET /api/render/{call_id}.
   (Modal web requests cap at 150s, so spawn+poll is the blessed pattern.)
 - Finished MP4s land on a Modal Volume and are served back via GET /renders/{name}.
 """
 
+import pathlib
+
 import modal
 
 HYPERFRAMES_VERSION = "0.7.41"
+HYPERFRAMES_NPM_PREFIX = "/opt/hyperframes-cli"
+HYPERFRAMES_BIN = f"{HYPERFRAMES_NPM_PREFIX}/node_modules/.bin/hyperframes"
+MINUTES = 60  # seconds
 
 # The composition bundled into the preview page + default render target.
 # Swap this to change what the template previews/renders.
 PREVIEW_COMPOSITION = "modal-intro"
+
+root = pathlib.Path(__file__).resolve().parent.parent
 
 app = modal.App("hyperframes-modal")
 
@@ -49,14 +56,18 @@ image = (
     modal.Image.from_registry("node:22-bookworm-slim", add_python="3.12")
     .apt_install("ffmpeg", "ca-certificates", *CHROMIUM_DEPS)
     .run_commands(
-        f"npm install -g hyperframes@{HYPERFRAMES_VERSION}",
-        # Bake chrome-headless-shell into the image so requests never download it.
-        "hyperframes browser ensure",
-        "hyperframes browser path",  # log the baked path in the build output
+        f"npm install --prefix {HYPERFRAMES_NPM_PREFIX} hyperframes@{HYPERFRAMES_VERSION}",
+        f"{HYPERFRAMES_BIN} browser ensure",
+        f"{HYPERFRAMES_BIN} browser path",
     )
-    .pip_install("fastapi[standard]")
-    .add_local_dir("compositions", remote_path="/compositions")
-    .add_local_dir("web", remote_path="/assets")
+    .env(
+        {
+            "PATH": f"{HYPERFRAMES_NPM_PREFIX}/node_modules/.bin:/usr/local/bin:/usr/bin:/bin"
+        }
+    )
+    .uv_pip_install("fastapi[standard]==0.139.0")
+    .add_local_dir(root / "compositions", remote_path="/compositions")
+    .add_local_dir(root / "web", remote_path="/assets")
 )
 
 renders = modal.Volume.from_name("hyperframes-renders", create_if_missing=True)
@@ -66,9 +77,7 @@ RENDERS_DIR = "/renders"
 
 @app.function(
     image=image,
-    cpu=4.0,
-    memory=12288,
-    timeout=900,
+    timeout=15 * MINUTES,
     volumes={RENDERS_DIR: renders},
 )
 def render_composition(composition: str = PREVIEW_COMPOSITION) -> str:
@@ -76,7 +85,6 @@ def render_composition(composition: str = PREVIEW_COMPOSITION) -> str:
 
     Returns the filename on the Volume (serve via GET /renders/{name}).
     """
-    import pathlib
     import shutil
     import subprocess
     import uuid
@@ -117,8 +125,6 @@ def render_composition(composition: str = PREVIEW_COMPOSITION) -> str:
 @app.function(image=image, volumes={RENDERS_DIR: renders})
 @modal.asgi_app()
 def web():
-    import pathlib
-
     import fastapi
     from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
     from fastapi.staticfiles import StaticFiles
@@ -138,7 +144,9 @@ def web():
         except TimeoutError:
             return JSONResponse({"status": "running"}, status_code=202)
         except Exception as exc:  # remote render failure surfaces here
-            return JSONResponse({"status": "failed", "error": str(exc)}, status_code=500)
+            return JSONResponse(
+                {"status": "failed", "error": str(exc)}, status_code=500
+            )
         return {"status": "done", "url": f"/renders/{name}"}
 
     @api.get("/renders/{name}")
@@ -159,7 +167,9 @@ def web():
         hyperframe runtime; compositions don't bake it in, so inject it here
         (same trick as the Vercel template's normalizePreviewHtml).
         """
-        html = pathlib.Path(f"/compositions/{PREVIEW_COMPOSITION}/index.html").read_text()
+        html = pathlib.Path(
+            f"/compositions/{PREVIEW_COMPOSITION}/index.html"
+        ).read_text()
         runtime = (
             '<script src="https://cdn.jsdelivr.net/npm/@hyperframes/core@'
             f'{HYPERFRAMES_VERSION}/dist/hyperframe.runtime.iife.js"></script>'
