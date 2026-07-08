@@ -1,0 +1,8 @@
+[project]
+name = "hyperframes-modal-template"
+version = "0.1.0"
+description = "HyperFrames video rendering on Modal"
+requires-python = ">=3.12"
+dependencies = [
+    "modal>=1.5",
+]

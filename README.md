@@ -1,6 +1,6 @@
 # HyperFrames on Modal
 
-Deploy a [HyperFrames](https://hyperframes.heygen.com) video-rendering app to [Modal](https://modal.com): an in-browser preview of a bundled composition plus an API that renders it to MP4 server-side — headless Chromium + FFmpeg on 4-vCPU containers, spun up per render, billed per second.
+Deploy a [HyperFrames](https://hyperframes.heygen.com) video-rendering app to [Modal](https://modal.com): an in-browser preview of a bundled composition plus an API that renders it to MP4 server-side — headless Chromium + FFmpeg, spun up per render, billed per second.
 
 Sibling templates: [Vercel](https://github.com/heygen-com/hyperframes-vercel-template) · [Cloudflare](https://github.com/heygen-com/hyperframes-cloudflare-template) · [deploy guide](https://hyperframes.heygen.com/guides/deploy)
 
@@ -15,7 +15,7 @@ web browser ──► Modal web endpoint (FastAPI, @modal.asgi_app)
                  └─ GET  /renders/:name  serve MP4 from Volume
                           │
                           ▼
-                render_composition (cpu=4, spawned per render)
+                render_composition (spawned per render)
                  └─ hyperframes render … --workers auto --no-browser-gpu
                           │
                           ▼
@@ -29,7 +29,8 @@ web browser ──► Modal web endpoint (FastAPI, @modal.asgi_app)
 ## Deploy
 
 ```bash
-pip install modal
+uv sync              # install modal locally
+source .venv/bin/activate
 modal setup          # authenticate (once)
 modal deploy src/app.py
 ```
@@ -65,7 +66,7 @@ npx hyperframes lint && npx hyperframes validate
 ## Costs & performance
 
 - First deploy builds the image (~2 min); afterwards deploys take ~2 s and renders start in ~1 s (container cold boot) — no per-request npm installs or browser downloads.
-- A 12 s 1080p30 composition renders in roughly 10-90 s depending on complexity, using 3 parallel Chrome workers on a 4-vCPU container.
+- A 12 s 1080p30 composition renders in roughly 10-90 s depending on complexity, using 3 parallel Chrome workers with `--workers auto`.
 - Containers scale to zero when idle; you pay per second of render time.
 - `--no-browser-gpu` matters: Modal containers have no GPU, and without the flag the hyperframes GPU probe hangs for 180 s before falling back to software rendering.
 
