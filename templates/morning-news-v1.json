@@ -1,0 +1,13 @@
+{
+  "id": "morning-news-v1",
+  "name": "Morning News",
+  "version": 1,
+  "description": "Avatar-led news format for headlines, script, and CTA.",
+  "defaultOutput": { "width": 1920, "height": 1080, "fps": 30, "durationSeconds": 45 },
+  "requiredAssets": [{ "key": "avatar", "label": "HeyGen avatar MP4", "type": "video", "accept": "video/mp4" }],
+  "fields": [
+    { "key": "headline", "label": "Headline", "type": "text", "required": true, "maxLength": 90 },
+    { "key": "script", "label": "Script", "type": "textarea", "required": true, "maxLength": 1200 },
+    { "key": "cta", "label": "CTA", "type": "text", "required": true, "maxLength": 120 }
+  ]
+}
