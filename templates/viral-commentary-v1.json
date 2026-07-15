@@ -1,0 +1,17 @@
+{
+  "id": "viral-commentary-v1",
+  "name": "Viral Commentary",
+  "version": 1,
+  "description": "Vertical avatar commentary around a licensed/source-approved clip capped at 10 seconds.",
+  "defaultOutput": { "width": 1080, "height": 1920, "fps": 30, "durationSeconds": 35 },
+  "requiredAssets": [
+    { "key": "avatar", "label": "HeyGen avatar MP4", "type": "video", "accept": "video/mp4" },
+    { "key": "source_clip", "label": "Approved source clip", "type": "video", "accept": "video/mp4", "maxDurationSeconds": 10 }
+  ],
+  "fields": [
+    { "key": "headline", "label": "Hook", "type": "text", "required": true, "maxLength": 80 },
+    { "key": "sourceDetails", "label": "Source/license details", "type": "textarea", "required": true, "maxLength": 500 },
+    { "key": "script", "label": "Commentary script", "type": "textarea", "required": true, "maxLength": 900 },
+    { "key": "cta", "label": "CTA", "type": "text", "required": true, "maxLength": 100 }
+  ]
+}
