@@ -13,6 +13,7 @@ import shutil
 import subprocess
 import time
 import uuid
+import urllib.parse
 
 import modal
 
@@ -204,7 +205,7 @@ def web():
     async def preview(project_id: str, _: str = fastapi.Depends(current_user)):
         project = projects[project_id]; template = load_template(project["templateId"])
         html = pathlib.Path(f"/compositions/{template['id']}/index.html").read_text().replace("</head>", f'<script src="https://cdn.jsdelivr.net/npm/@hyperframes/core@{HYPERFRAMES_VERSION}/dist/hyperframe.runtime.iife.js"></script></head>', 1)
-        manifest = json.dumps(manifest_for(project, template)).replace("</", "<\\/")
+        manifest = urllib.parse.quote(json.dumps(manifest_for(project, template)))
         return HTMLResponse(html.replace("./manifest.json", f"data:application/json,{manifest}"))
 
     @api.post("/api/projects/{project_id}/render")

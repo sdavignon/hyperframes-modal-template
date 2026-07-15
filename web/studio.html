@@ -1,1 +1,57 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Creator Studio</title><script type="module" src="https://cdn.jsdelivr.net/npm/@hyperframes/player@0.7.41"></script><link rel="stylesheet" href="/studio.css"></head><body><header><div><p class="eyebrow">Private Creator Studio</p><h1>Reusable HyperFrames templates</h1></div><button id="logout" hidden>Sign out</button></header><main id="login" class="card"><h2>Sign in</h2><input id="password" type="password" placeholder="Studio password"><button id="signin">Enter Studio</button><p id="loginStatus"></p></main><main id="studio" hidden><section><h2>1. Select a template</h2><div id="templates" class="templates"></div></section><section class="workspace"><form id="projectForm" class="card"><h2>2. Fill fields and assets</h2><div id="fields"></div><div id="assets"></div><button type="submit">Save draft</button><button type="button" id="render">Render</button></form><div class="card preview"><h2>3. Preview</h2><hyperframes-player id="player" controls></hyperframes-player><p id="status"></p><a id="download" hidden>Download MP4</a></div></section><section class="card"><h2>Project history</h2><div id="history"></div></section></main><script src="/studio.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Creator Studio</title>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@hyperframes/player@0.7.41"></script>
+    <link rel="stylesheet" href="/studio.css" />
+  </head>
+  <body>
+    <header>
+      <div>
+        <p class="eyebrow">Private Creator Studio</p>
+        <h1>Reusable HyperFrames templates</h1>
+      </div>
+      <button id="logout" hidden>Sign out</button>
+    </header>
+
+    <main id="login" class="card">
+      <h2>Sign in</h2>
+      <input id="password" type="password" placeholder="Studio password" />
+      <button id="signin">Enter Studio</button>
+      <p id="loginStatus"></p>
+    </main>
+
+    <main id="studio" hidden>
+      <section>
+        <h2>1. Select a template</h2>
+        <div id="templates" class="templates"></div>
+      </section>
+
+      <section class="workspace">
+        <form id="projectForm" class="card">
+          <h2>2. Fill fields and assets</h2>
+          <div id="fields"></div>
+          <div id="assets"></div>
+          <button type="submit">Save draft</button>
+          <button type="button" id="render">Render</button>
+        </form>
+
+        <div class="card preview">
+          <h2>3. Preview</h2>
+          <hyperframes-player id="player" controls></hyperframes-player>
+          <p id="status"></p>
+          <a id="download" hidden>Download MP4</a>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Project history</h2>
+        <div id="history"></div>
+      </section>
+    </main>
+
+    <script src="/studio.js"></script>
+  </body>
+</html>
