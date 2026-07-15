@@ -26,6 +26,7 @@ RENDERS_DIR = "/renders"
 ASSETS_DIR = "/assets-store"
 
 app = modal.App("hyperframes-creator-studio")
+production_secret = modal.Secret.from_name("Production")
 
 CHROMIUM_DEPS = [
     "libnss3", "libnspr4", "libatk1.0-0", "libatk-bridge2.0-0", "libcups2",
@@ -122,7 +123,11 @@ def render_job(job_id: str) -> None:
     render_jobs[job_id] = job
 
 
-@app.function(image=image, volumes={RENDERS_DIR: renders, ASSETS_DIR: asset_cache})
+@app.function(
+    image=image,
+    volumes={RENDERS_DIR: renders, ASSETS_DIR: asset_cache},
+    secrets=[production_secret],
+)
 @modal.asgi_app()
 def web():
     import hmac
@@ -132,7 +137,7 @@ def web():
     from itsdangerous import BadSignature, URLSafeSerializer
 
     api = fastapi.FastAPI(title="HyperFrames Creator Studio")
-    signer = URLSafeSerializer(os.environ.get("SESSION_SECRET", "dev-only-change-me"), salt="studio-session")
+    signer = URLSafeSerializer(os.environ["SESSION_SECRET"], salt="studio-session")
 
     def current_user(request: fastapi.Request) -> str:
         token = request.cookies.get("studio_session")
@@ -146,7 +151,7 @@ def web():
 
     @api.post("/api/login")
     async def login(body: dict, response: fastapi.Response):
-        expected = os.environ.get("STUDIO_PASSWORD", "change-me")
+        expected = os.environ["STUDIO_PASSWORD"]
         if not hmac.compare_digest(str(body.get("password", "")), expected):
             raise fastapi.HTTPException(401, "Invalid password")
         response.set_cookie("studio_session", signer.dumps({"sub": "owner", "iat": now()}), httponly=True, secure=True, samesite="strict", max_age=86400)

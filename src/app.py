@@ -34,6 +34,7 @@ PREVIEW_COMPOSITION = "modal-intro"
 root = pathlib.Path(__file__).resolve().parent.parent
 
 app = modal.App("hyperframes-modal")
+production_secret = modal.Secret.from_name("Production")
 
 # System libraries chrome-headless-shell needs on Debian bookworm.
 CHROMIUM_DEPS = [
@@ -248,7 +249,11 @@ def render_composition(composition: str = PREVIEW_COMPOSITION) -> str:
     return name
 
 
-@app.function(image=image, volumes={RENDERS_DIR: renders, ASSETS_DIR: studio_assets})
+@app.function(
+    image=image,
+    volumes={RENDERS_DIR: renders, ASSETS_DIR: studio_assets},
+    secrets=[production_secret],
+)
 @modal.asgi_app()
 def web():
     import hmac
@@ -261,7 +266,7 @@ def web():
 
     api = fastapi.FastAPI(title="HyperFrames on Modal")
     signer = URLSafeSerializer(
-        os.environ.get("SESSION_SECRET", "dev-only-change-me"),
+        os.environ["SESSION_SECRET"],
         salt="studio-session",
     )
 
@@ -277,7 +282,7 @@ def web():
 
     @api.post("/api/login")
     async def login(body: dict, response: fastapi.Response):
-        expected = os.environ.get("STUDIO_PASSWORD", "change-me")
+        expected = os.environ["STUDIO_PASSWORD"]
         if not hmac.compare_digest(str(body.get("password", "")), expected):
             raise fastapi.HTTPException(status_code=401, detail="Invalid password")
         response.set_cookie(
