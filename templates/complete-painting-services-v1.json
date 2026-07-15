@@ -1,0 +1,14 @@
+{
+  "id": "complete-painting-services-v1",
+  "name": "Complete Painting Services",
+  "version": 1,
+  "description": "Real project photos, services, proof, and CTA for a painting services promo.",
+  "defaultOutput": { "width": 1920, "height": 1080, "fps": 30, "durationSeconds": 45 },
+  "requiredAssets": [{ "key": "project_photos", "label": "Actual work photos", "type": "image", "accept": "image/*", "multiple": true }],
+  "fields": [
+    { "key": "headline", "label": "Project headline", "type": "text", "required": true, "maxLength": 90 },
+    { "key": "services", "label": "Services shown", "type": "textarea", "required": true, "maxLength": 600 },
+    { "key": "proof", "label": "Proof / testimonial", "type": "textarea", "required": true, "maxLength": 500 },
+    { "key": "cta", "label": "CTA", "type": "text", "required": true, "maxLength": 120 }
+  ]
+}
